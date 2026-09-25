@@ -38,7 +38,7 @@ export const Dashboard: React.FC = () => {
 
   const selectedServicesCount = activeProposal
     ? activeProposal.selectedServices.length
-    : state.costEstimates.length;
+    : 0;
 
   const currentRegion = activeProposal ? activeProposal.region : 'us-east-1';
 
@@ -76,7 +76,7 @@ export const Dashboard: React.FC = () => {
           value={selectedServicesCount}
           icon={Server}
           accentColor="security"
-          subtitle="Componentes en arquitectura"
+          subtitle="De la propuesta activa"
         />
         <StatCard
           title="Región Principal"

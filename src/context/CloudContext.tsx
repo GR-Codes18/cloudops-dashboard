@@ -24,7 +24,7 @@ const initialCostEstimates: CostEstimate[] = [
     serviceId: 'ec2',
     quantity: 4,
     estimatedHours: 730,
-    estimatedCost: 0.0416,
+    hourlyRate: 0.0416,
     monthlyCost: 121.47,
     annualCost: 1457.64,
   },
@@ -33,7 +33,7 @@ const initialCostEstimates: CostEstimate[] = [
     serviceId: 'rds',
     quantity: 1,
     estimatedHours: 730,
-    estimatedCost: 0.35,
+    hourlyRate: 0.35,
     monthlyCost: 255.50,
     annualCost: 3066.00,
   },
@@ -42,7 +42,7 @@ const initialCostEstimates: CostEstimate[] = [
     serviceId: 's3',
     quantity: 500,
     estimatedHours: 1,
-    estimatedCost: 0.023,
+    hourlyRate: 0.023,
     monthlyCost: 11.50,
     annualCost: 138.00,
   },
@@ -132,7 +132,7 @@ export const CloudProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const addCostEstimate = (estimateData: Omit<CostEstimate, 'id' | 'monthlyCost' | 'annualCost'>) => {
-    const monthlyCost = Number((estimateData.quantity * estimateData.estimatedHours * estimateData.estimatedCost).toFixed(2));
+    const monthlyCost = Number((estimateData.quantity * estimateData.estimatedHours * estimateData.hourlyRate).toFixed(2));
     const annualCost = Number((monthlyCost * 12).toFixed(2));
 
     const newEstimate: CostEstimate = {

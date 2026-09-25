@@ -26,7 +26,7 @@ export const Planning: React.FC = () => {
     region: 'us-east-1',
     estimatedUsers: 1000,
     availabilityLevel: 'Alta disponibilidad' as AvailabilityLevel,
-    selectedServices: ['ec2', 'vpc'] as string[],
+    selectedServices: [] as string[],
     migrationGoal: '',
   });
 
@@ -77,7 +77,7 @@ export const Planning: React.FC = () => {
       estimatedUsers: Number(formData.estimatedUsers),
       availabilityLevel: formData.availabilityLevel,
       selectedServices: formData.selectedServices,
-      migrationGoal: formData.migrationGoal || 'Optimización de infraestructura y escalabilidad.',
+      migrationGoal: formData.migrationGoal || 'No especificado',
     });
 
     // Resetear Formulario
@@ -86,9 +86,9 @@ export const Planning: React.FC = () => {
       appType: 'Web App / Microservicios',
       description: '',
       region: 'us-east-1',
-      estimatedUsers: 5000,
+      estimatedUsers: 1000,
       availabilityLevel: 'Alta disponibilidad',
-      selectedServices: ['ec2', 'vpc'],
+      selectedServices: [],
       migrationGoal: '',
     });
 

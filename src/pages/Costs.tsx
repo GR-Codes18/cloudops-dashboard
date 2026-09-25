@@ -29,14 +29,14 @@ export const Costs: React.FC = () => {
     serviceId: 'ec2',
     quantity: 1,
     estimatedHours: 730,
-    estimatedCost: 0.05,
+    hourlyRate: 0.05,
   });
 
   const [formError, setFormError] = useState('');
 
   // Cálculos en vivo para la vista previa
   const previewMonthly = Number(
-    (formData.quantity * formData.estimatedHours * formData.estimatedCost).toFixed(2)
+    (formData.quantity * formData.estimatedHours * formData.hourlyRate).toFixed(2)
   );
   const previewAnnual = Number((previewMonthly * 12).toFixed(2));
 
@@ -79,7 +79,7 @@ export const Costs: React.FC = () => {
       setFormError('Las horas estimadas deben ser mayores a 0.');
       return;
     }
-    if (formData.estimatedCost <= 0) {
+    if (formData.hourlyRate <= 0) {
       setFormError('La tarifa por hora debe ser mayor a 0.');
       return;
     }
@@ -88,7 +88,7 @@ export const Costs: React.FC = () => {
       serviceId: formData.serviceId,
       quantity: Number(formData.quantity),
       estimatedHours: Number(formData.estimatedHours),
-      estimatedCost: Number(formData.estimatedCost),
+      hourlyRate: Number(formData.hourlyRate),
     });
 
     // Resetear manteniendo un estado inicial limpio
@@ -96,7 +96,7 @@ export const Costs: React.FC = () => {
       serviceId: 'ec2',
       quantity: 1,
       estimatedHours: 730,
-      estimatedCost: 0.05,
+      hourlyRate: 0.05,
     });
   };
 
@@ -221,9 +221,9 @@ export const Costs: React.FC = () => {
                   type="number"
                   step="0.001"
                   min="0.001"
-                  value={formData.estimatedCost}
+                  value={formData.hourlyRate}
                   onChange={(e) =>
-                    setFormData({ ...formData, estimatedCost: Number(e.target.value) })
+                    setFormData({ ...formData, hourlyRate: Number(e.target.value) })
                   }
                   className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary"
                 />
