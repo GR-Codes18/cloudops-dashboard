@@ -5,6 +5,7 @@ import { Server, Shield, Database, HardDrive, Globe, Network, Cpu } from 'lucide
 
 interface ServiceCardProps {
   service: AWSService;
+  onClick?: () => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -17,11 +18,14 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   cloudfront: Server,
 };
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
+export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onClick }) => {
   const IconComponent = iconMap[service.id] || Server;
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between">
+    <div
+      onClick={onClick}
+      className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
+    >
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
