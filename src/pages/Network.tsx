@@ -41,7 +41,7 @@ export const Network: React.FC = () => {
         </p>
 
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-          {flowNodes.map((node, idx) => {
+          {flowNodes.map((node) => {
             const Icon = node.icon;
             return (
               <React.Fragment key={node.label}>
@@ -122,7 +122,7 @@ export const Network: React.FC = () => {
         </div>
       </div>
 
-            {/* Desglose de subredes dentro de la VPC */}
+      {/* Desglose de subredes dentro de la VPC */}
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
