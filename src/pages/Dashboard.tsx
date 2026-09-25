@@ -3,6 +3,8 @@ import { useCloudContext } from '../context/CloudContext';
 import { StatCard } from '../components/StatCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { awsServices } from '../data/awsServices';
+import { securityChecks } from '../data/securityChecks';
+import { calculateSecurityMetrics } from '../utils/securityMetrics';
 import {
   DollarSign,
   Server,
@@ -12,6 +14,13 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
+  Clock,
+  ArrowRight,
+  ArrowDown,
+  Lock,
+  Cpu,
+  Database,
+  Network as NetworkIcon,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -23,6 +32,46 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts';
+
+// Nodos del flujo general del sistema Cloud (Módulos integrados)
+const systemFlowNodes = [
+  {
+    id: 'ingress',
+    title: 'Entrada & CDN',
+    subtitle: 'Tráfico & DNS',
+    icon: Globe,
+    items: ['Route 53', 'CloudFront'],
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+  },
+  {
+    id: 'security',
+    title: 'Seguridad & IAM',
+    subtitle: 'Protección',
+    icon: Lock,
+    items: ['IAM Roles', 'AWS KMS'],
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-500/10',
+  },
+  {
+    id: 'compute',
+    title: 'Cómputo (VPC)',
+    subtitle: 'Backend App',
+    icon: Cpu,
+    items: ['EC2 Subred Priv.', 'Auto Scaling'],
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-500/10',
+  },
+  {
+    id: 'data',
+    title: 'Persistencia',
+    subtitle: 'Datos & Storage',
+    icon: Database,
+    items: ['RDS Multi-AZ', 'S3 Bucket'],
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-500/10',
+  },
+];
 
 export const Dashboard: React.FC = () => {
   const { state } = useCloudContext();
@@ -41,6 +90,9 @@ export const Dashboard: React.FC = () => {
     : 0;
 
   const currentRegion = activeProposal ? activeProposal.region : 'us-east-1';
+
+  // --- Métricas de Seguridad Calculadas ---
+  const securityMetrics = calculateSecurityMetrics(securityChecks);
 
   // Datos adaptados para el gráfico de Recharts
   const chartData = state.costEstimates.map((item) => {
@@ -87,7 +139,7 @@ export const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* 2. Sección Central: Gráfico de Costos + Resumen de Arquitectura */}
+      {/* 2. Fila Central: Gráfico de Costos + Resumen de Arquitectura */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico de Distribución de Costos (2 Columnas) */}
         <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-5 shadow-sm">
@@ -137,7 +189,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Resumen de Propuesta / Estado de Arquitectura (1 Columna) */}
+        {/* Resumen de Propuesta / Solución Activa (1 Columna) */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -183,48 +235,148 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Resumen del Estado de Seguridad */}
-      <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-emerald-500/10 text-security rounded-xl">
-              <ShieldCheck className="w-5 h-5" />
+      {/* 3. Fila Inferior: Diagrama del Sistema Cloud (2 cols) + Seguridad Compacta (1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Diagrama de Flujo General del Sistema Cloud (2 Columnas) */}
+        <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                  <NetworkIcon className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-text-primary text-base">
+                  Flujo de Arquitectura del Sistema
+                </h3>
+              </div>
+              <span className="text-[11px] font-medium text-text-secondary bg-slate-100 px-2.5 py-1 rounded-lg">
+                Visión End-to-End
+              </span>
             </div>
-            <div>
-              <h3 className="font-bold text-text-primary text-base leading-tight">
-                Estado General de Seguridad y Cumplimiento
-              </h3>
-              <p className="text-xs text-text-secondary">
-                Monitoreo del modelo de responsabilidad compartida AWS
-              </p>
+            <p className="text-xs text-text-secondary mb-5">
+              Integración entre las capas de entrada, seguridad, cómputo y persistencia de datos
+            </p>
+
+            {/* Diagrama de pasos horizontales/verticales */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+              {systemFlowNodes.map((node, index) => {
+                const Icon = node.icon;
+                const isLast = index === systemFlowNodes.length - 1;
+
+                return (
+                  <React.Fragment key={node.id}>
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col items-center text-center gap-2 relative">
+                      <div className={`p-2.5 rounded-xl ${node.bgColor} ${node.color}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-text-primary text-xs">{node.title}</p>
+                        <p className="text-[10px] text-text-secondary">{node.subtitle}</p>
+                      </div>
+
+                      <div className="w-full pt-2 border-t border-slate-200/60 flex flex-col gap-0.5">
+                        {node.items.map((item) => (
+                          <span
+                            key={item}
+                            className="text-[10px] font-medium text-slate-600 bg-white border border-slate-100 rounded px-1.5 py-0.5"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {!isLast && (
+                      <div className="flex justify-center text-slate-400 py-1 md:py-0">
+                        <ArrowRight className="w-4 h-4 hidden md:block" />
+                        <ArrowDown className="w-4 h-4 md:hidden" />
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
-          <StatusBadge status="correcto" size="md" />
+
+          <div className="pt-3 border-t border-slate-100 mt-4 text-[11px] text-text-secondary flex justify-between items-center">
+            <span>Modelado CloudOps</span>
+            <span className="text-primary font-medium">AWS Well-Architected Framework</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-security flex-shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-text-primary">IAM y Accesos</p>
-              <p className="text-[11px] text-text-secondary">MFA obligatorio activado</p>
+        {/* Resumen Compacto de Seguridad y Cumplimiento (1 Columna) */}
+        <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-500/10 text-security rounded-xl">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-text-primary text-base leading-tight">
+                    Seguridad y Cumplimiento
+                  </h3>
+                  <p className="text-[11px] text-text-secondary">
+                    {securityMetrics.totalChecks} verificaciones evaluadas
+                  </p>
+                </div>
+              </div>
+              <StatusBadge status={securityMetrics.overallStatus} size="sm" />
+            </div>
+
+            {/* Barra de progreso de cumplimiento */}
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-3">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-semibold text-text-primary">Cumplimiento Global</span>
+                <span className="text-xs font-bold text-emerald-600">
+                  {securityMetrics.compliancePercentage}%
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${securityMetrics.compliancePercentage}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Tarjetas Cuantitativas Apiladas */}
+            <div className="space-y-2">
+              <div className="p-2.5 bg-emerald-50/60 border border-emerald-200/60 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span className="text-xs font-medium text-emerald-950">Conformes</span>
+                </div>
+                <span className="text-xs font-extrabold text-emerald-900">
+                  {securityMetrics.correctCount} / {securityMetrics.totalChecks}
+                </span>
+              </div>
+
+              <div className="p-2.5 bg-amber-50/60 border border-amber-200/60 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span className="text-xs font-medium text-amber-950">En Revisión</span>
+                </div>
+                <span className="text-xs font-extrabold text-amber-900">
+                  {securityMetrics.revisionCount}
+                </span>
+              </div>
+
+              <div className="p-2.5 bg-red-50/60 border border-red-200/60 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <span className="text-xs font-medium text-red-950">Atención Requerida</span>
+                </div>
+                <span className="text-xs font-extrabold text-red-900">
+                  {securityMetrics.problemCount}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-security flex-shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-text-primary">Cifrado de Datos</p>
-              <p className="text-[11px] text-text-secondary">AWS KMS activo en S3 y RDS</p>
-            </div>
-          </div>
-
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-cost flex-shrink-0" />
-            <div>
-              <p className="text-xs font-bold text-text-primary">Red y Seguridad</p>
-              <p className="text-[11px] text-text-secondary">1 regla Security Group en revisión</p>
-            </div>
+          <div className="pt-3 border-t border-slate-100 mt-4 text-[11px] text-text-secondary flex justify-between items-center">
+            <span>Modelo AWS</span>
+            <span className="text-emerald-600 font-semibold">Responsabilidad Compartida</span>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useCloudContext } from '../context/CloudContext';
 import { awsServices } from '../data/awsServices';
 import { CostCard } from '../components/CostCard';
@@ -11,6 +12,8 @@ import {
   PieChart as PieIcon,
   Layers,
   HelpCircle,
+  FileText,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -23,16 +26,63 @@ import {
 
 export const Costs: React.FC = () => {
   const { state, addCostEstimate, deleteCostEstimate } = useCloudContext();
+  const location = useLocation();
+
+  // Capturar propuesta recibida por navegación o seleccionar la primera por defecto
+  const initialProposalId =
+    (location.state as { selectedProposalId?: string })?.selectedProposalId ||
+    state.proposals[0]?.id ||
+    '';
+
+  const [selectedProposalId, setSelectedProposalId] = useState<string>(initialProposalId);
+
+  useEffect(() => {
+    if (!selectedProposalId && state.proposals.length > 0) {
+      setSelectedProposalId(state.proposals[0].id);
+    }
+  }, [state.proposals, selectedProposalId]);
+
+  // Propuesta de referencia activa
+  const activeProposal = state.proposals.find((p) => p.id === selectedProposalId);
+
+  // --- Lógica de Filtrado Inteligente de Servicios ---
+  const estimatedServiceIds = state.costEstimates.map((c) => c.serviceId);
+
+  const availableServices = awsServices.filter((svc) => {
+    const isAlreadyEstimated = estimatedServiceIds.includes(svc.id);
+
+    if (activeProposal) {
+      const isInProposal = activeProposal.selectedServices.includes(svc.id);
+      return isInProposal && !isAlreadyEstimated;
+    }
+
+    return !isAlreadyEstimated;
+  });
 
   // --- Estado del Formulario Calculadora ---
   const [formData, setFormData] = useState({
-    serviceId: 'ec2',
+    serviceId: '',
     quantity: 1,
     estimatedHours: 730,
     hourlyRate: 0.05,
   });
 
   const [formError, setFormError] = useState('');
+
+  // Sincronizar el selector de la calculadora con el primer servicio disponible
+  useEffect(() => {
+    if (availableServices.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        serviceId: availableServices[0].id,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        serviceId: '',
+      }));
+    }
+  }, [selectedProposalId, state.costEstimates]);
 
   // Cálculos en vivo para la vista previa
   const previewMonthly = Number(
@@ -71,6 +121,10 @@ export const Costs: React.FC = () => {
     e.preventDefault();
     setFormError('');
 
+    if (!formData.serviceId) {
+      setFormError('Selecciona un servicio válido para agregar.');
+      return;
+    }
     if (formData.quantity <= 0) {
       setFormError('La cantidad debe ser mayor a 0.');
       return;
@@ -91,13 +145,13 @@ export const Costs: React.FC = () => {
       hourlyRate: Number(formData.hourlyRate),
     });
 
-    // Resetear manteniendo un estado inicial limpio
-    setFormData({
-      serviceId: 'ec2',
+    // Resetear manteniendo valores por defecto limpios
+    setFormData((prev) => ({
+      ...prev,
       quantity: 1,
       estimatedHours: 730,
       hourlyRate: 0.05,
-    });
+    }));
   };
 
   return (
@@ -134,6 +188,42 @@ export const Costs: React.FC = () => {
         />
       </div>
 
+      {/* Selector de Propuestas de Referencia */}
+      {state.proposals.length > 0 && (
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-text-primary">
+                Propuesta de Referencia Activa
+              </p>
+              <p className="text-[11px] text-text-secondary">
+                {activeProposal
+                  ? `Mostrando servicios pendientes de presupuestar para: "${activeProposal.solutionName}"`
+                  : 'Selecciona una propuesta para filtrar la calculadora'}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-auto">
+            <select
+              value={selectedProposalId}
+              onChange={(e) => setSelectedProposalId(e.target.value)}
+              className="w-full sm:w-64 px-3 py-2 bg-card border border-border rounded-xl text-xs text-text-primary font-medium focus:outline-none focus:border-primary shadow-sm"
+            >
+              <option value="">-- Ver todos los servicios libres --</option>
+              {state.proposals.map((prop) => (
+                <option key={prop.id} value={prop.id}>
+                  {prop.solutionName} ({prop.selectedServices.length} serv.)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* 2. Calculadora de Costos y Gráfico de Distribución */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulario Calculadora (2 Columnas) */}
@@ -160,7 +250,7 @@ export const Costs: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Selección del Servicio */}
+              {/* Selección de Servicio Filtrado Dinámicamente */}
               <div>
                 <label className="block text-xs font-semibold text-text-primary mb-1">
                   Servicio AWS *
@@ -168,13 +258,22 @@ export const Costs: React.FC = () => {
                 <select
                   value={formData.serviceId}
                   onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary"
+                  disabled={availableServices.length === 0}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary font-medium disabled:opacity-60 disabled:bg-slate-100"
                 >
-                  {awsServices.map((svc) => (
-                    <option key={svc.id} value={svc.id}>
-                      {svc.name} ({svc.category})
+                  {availableServices.length > 0 ? (
+                    availableServices.map((svc) => (
+                      <option key={svc.id} value={svc.id}>
+                        {svc.name} ({svc.category})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">
+                      {activeProposal
+                        ? '✓ Todos los servicios de esta propuesta ya fueron presupuestados'
+                        : '✓ Todos los servicios del catálogo ya fueron agregados'}
                     </option>
-                  ))}
+                  )}
                 </select>
               </div>
 
@@ -187,8 +286,9 @@ export const Costs: React.FC = () => {
                   type="number"
                   min="1"
                   value={formData.quantity}
+                  disabled={availableServices.length === 0}
                   onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary disabled:opacity-60 disabled:bg-slate-100"
                 />
               </div>
 
@@ -202,10 +302,11 @@ export const Costs: React.FC = () => {
                   min="1"
                   max="730"
                   value={formData.estimatedHours}
+                  disabled={availableServices.length === 0}
                   onChange={(e) =>
                     setFormData({ ...formData, estimatedHours: Number(e.target.value) })
                   }
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary disabled:opacity-60 disabled:bg-slate-100"
                 />
                 <span className="text-[10px] text-text-secondary mt-0.5 block">
                   730 horas = 24/7 durante un mes completo
@@ -222,10 +323,11 @@ export const Costs: React.FC = () => {
                   step="0.001"
                   min="0.001"
                   value={formData.hourlyRate}
+                  disabled={availableServices.length === 0}
                   onChange={(e) =>
                     setFormData({ ...formData, hourlyRate: Number(e.target.value) })
                   }
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary disabled:opacity-60 disabled:bg-slate-100"
                 />
               </div>
             </div>
@@ -252,10 +354,21 @@ export const Costs: React.FC = () => {
               </div>
             </div>
 
+            {availableServices.length === 0 && activeProposal && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-security rounded-xl text-xs font-medium flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  ¡Excelente! Todos los servicios asignados a la propuesta{' '}
+                  <strong>"{activeProposal.solutionName}"</strong> ya han sido presupuestados.
+                </span>
+              </div>
+            )}
+
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-cost text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors flex items-center gap-2 shadow-sm"
+                disabled={availableServices.length === 0}
+                className="px-5 py-2.5 bg-cost text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" /> Agregar Estimación
               </button>

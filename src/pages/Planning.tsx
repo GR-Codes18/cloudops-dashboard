@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCloudContext } from '../context/CloudContext';
 import { awsServices } from '../data/awsServices';
 import { StatusBadge } from '../components/StatusBadge';
@@ -13,10 +14,12 @@ import {
   Layers,
   CheckCircle2,
   Sparkles,
+  Calculator,
 } from 'lucide-react';
 
 export const Planning: React.FC = () => {
   const { state, addProposal, deleteProposal } = useCloudContext();
+  const navigate = useNavigate();
 
   // --- Estado del Formulario ---
   const [formData, setFormData] = useState({
@@ -49,6 +52,11 @@ export const Planning: React.FC = () => {
         };
       }
     });
+  };
+
+  // Redirección directa al módulo de Costos con la propuesta seleccionada
+  const handleEstimateCosts = (proposalId: string) => {
+    navigate('/costs', { state: { selectedProposalId: proposalId } });
   };
 
   // Envío del Formulario
@@ -377,7 +385,12 @@ export const Planning: React.FC = () => {
 
                 <div className="pt-3 border-t border-slate-100 mt-4 flex items-center justify-between text-[11px] text-text-secondary">
                   <span>ID Propuesta: {prop.id}</span>
-                  <span>Registrado el: {new Date(prop.createdAt).toLocaleDateString()}</span>
+                  <button
+                    onClick={() => handleEstimateCosts(prop.id)}
+                    className="px-3 py-1.5 bg-amber-500/10 text-cost font-bold rounded-lg hover:bg-amber-500/20 transition-colors flex items-center gap-1.5 text-xs"
+                  >
+                    <Calculator className="w-3.5 h-3.5" /> Estimar Costos
+                  </button>
                 </div>
               </div>
             ))}

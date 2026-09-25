@@ -69,6 +69,7 @@ export interface Region {
 
 export interface CostEstimate {
   id: string;
+  proposalId?: string;
   serviceId: string; // referencia a AWSService
   quantity: number;
   estimatedHours: number;
