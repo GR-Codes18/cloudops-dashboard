@@ -44,9 +44,6 @@ export const SecurityCard: React.FC<SecurityCardProps> = ({ check }) => {
 
       <div className="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-[11px] text-text-secondary font-medium">
         <span>ID Control: <strong className="text-text-primary">{check.id}</strong></span>
-        <span className="text-primary font-semibold hover:underline cursor-pointer">
-          Ver detalles &rarr;
-        </span>
       </div>
     </div>
   );
