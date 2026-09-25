@@ -28,6 +28,9 @@ export interface AWSService {
   description: string;
   mainFunction: string;
   status: ServiceStatus;
+  architectureRole: string;      // rol dentro de una arquitectura típica
+  keyCapabilities: string[];     // 3 capacidades clave, bullets cortos
+  docsUrl: string;               // link a documentación oficial de AWS
 }
 
 // ============================================
@@ -55,8 +58,9 @@ export interface Region {
   id: string;
   name: string;
   location: string;
-  deployedServices: string[]; // nombres o IDs de servicios desplegados ahí
+  deployedServices: string[];
   status: InfrastructureStatus;
+  description: string;
 }
 
 // ============================================
@@ -68,7 +72,7 @@ export interface CostEstimate {
   serviceId: string; // referencia a AWSService
   quantity: number;
   estimatedHours: number;
-  estimatedCost: number;
+  hourlyRate: number;
   monthlyCost: number;
   annualCost: number;
 }
